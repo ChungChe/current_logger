@@ -1,1 +1,2 @@
-ACTION=="add", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="5523", RUN+="/tmp/logger.sh", GROUP="duntex"
+ACTION=="add", ENV{ID_VENDOR_ID}=="1a86", ENV{ID_MODEL_ID}=="5523", RUN+="/tmp/logger.sh", GROUP="pi"
+ACTION=="remove", ENV{ID_VENDOR_ID}=="1a86", ENV{ID_MODEL_ID}=="5523", RUN+="/tmp/rm.sh"

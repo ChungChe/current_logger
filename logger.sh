@@ -1,2 +1,3 @@
 #!/usr/bin/env bash
-python /home/duntex/current_logger/logger.py >> /var/log/current.log
+echo "usb inserted at" `date` >> /var/log/usb_plug.log
+python /home/pi/current_logger/logger.py >> /var/log/current.log
