@@ -1,2 +1,2 @@
-ACTION=="add", ENV{ID_VENDOR_ID}=="1a86", ENV{ID_MODEL_ID}=="5523", RUN+="/tmp/logger.sh", GROUP="pi"
-ACTION=="remove", ENV{ID_VENDOR_ID}=="1a86", ENV{ID_MODEL_ID}=="5523", RUN+="/tmp/rm.sh"
+ACTION=="add", ENV{ID_VENDOR_ID}=="1a86", ENV{ID_MODEL_ID}=="5523", RUN+="/home/pi/current_logger/logger.sh", GROUP="pi"
+ACTION=="remove", ENV{ID_VENDOR_ID}=="1a86", ENV{ID_MODEL_ID}=="5523", RUN+="/home/pi/current_logger/rm.sh"
