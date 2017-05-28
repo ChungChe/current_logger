@@ -6,6 +6,8 @@ from time import strftime
 import datetime
 import thread
 import sys
+from tendo import singleton
+me = singleton.SingleInstance()
 
 mb = minimalmodbus
 mb.BAUDRATE = 4800
