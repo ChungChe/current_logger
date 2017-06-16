@@ -25,7 +25,7 @@ def print_data(threadName):
     while True:
         global current
         time.sleep(5)
-        current_time = strftime("%Y-%m-%d %H:%M:%S")
+        current_time = strftime("%Y/%m/%d %H:%M:%S")
         sys.stdout.write("{} {}\n".format(current_time, current))
         sys.stdout.flush()
 
