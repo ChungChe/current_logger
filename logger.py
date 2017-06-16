@@ -7,6 +7,10 @@ import datetime
 import thread
 import sys
 from tendo import singleton
+
+from logger_gui import *
+from random import randint
+
 me = singleton.SingleInstance()
 
 mb = minimalmodbus
@@ -22,6 +26,12 @@ instrument = mb.Instrument('/dev/ttyUSB0', 1) # port name, slave address
 instrument.mode = minimalmodbus.MODE_RTU
 
 def print_data(threadName):
+    m = DynamicPlotter(sampleinterval = 5, timewindow = 1800.)
+    m.show()
+    sys.exit(app.exec_())
+
+    global current
+
     while True:
         global current
         time.sleep(5)
@@ -33,7 +43,9 @@ def read_data_from_current_meter(threadName):
     while True:
         try:
             global current
-            current = instrument.read_register(30, 1) # Register number, number of decimals
+            time.sleep(1)
+            current = randint(30, 120)
+            #current = instrument.read_register(30, 1) # Register number, number of decimals
             #print("Current: {}".format(current))
         except Exception as e:
             #print(e)
