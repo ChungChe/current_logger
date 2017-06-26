@@ -17,30 +17,21 @@ from time import strftime
 import datetime
 import thread
 from tendo import singleton
-
+from KY_001 import ky_001
 mode = 0 # mode 0: test, mode 1: release
 
 current = 0.0
-
-if mode == 1:
-    me = singleton.SingleInstance()
-
-    mb = minimalmodbus
-    mb.BAUDRATE = 4800
-    mb.PARITY = 'N'
-    mb.BYTESIZE = 8
-    mb.STOPBITS = 1
-    mb.TIMEOUT = 0.05
-
-
-    instrument = mb.Instrument('/dev/ttyUSB0', 1) # port name, slave address
-    instrument.mode = minimalmodbus.MODE_RTU
 
 class lineEdit(QLineEdit):
     def __init__(self, parent = None):
         super(lineEdit, self).__init__(parent)
         self.setReadOnly(True)
         self.setFixedSize(100, 60)
+        f = self.font()
+        f.setPointSize(20)
+        f.setBold(True)
+        self.setFont(f)
+
 class DynamicPlotter(QWidget):
     def __init__(self, sampleinterval = 0.1, timewindow = 10., size =(800,500), parent = None):
         super(DynamicPlotter, self).__init__(parent)
@@ -53,6 +44,7 @@ class DynamicPlotter(QWidget):
         self._interval = int(sampleinterval * 1000)
         self._bufsize = int(timewindow/sampleinterval)
         self.databuffer = collections.deque([0.0]*self._bufsize, self._bufsize)
+        self.databuffer_tmp = collections.deque([0.0]*self._bufsize, self._bufsize)
         self.x = np.linspace(-timewindow, 0.0, self._bufsize)
         self.y = np.zeros(self._bufsize, dtype = np.float)
         # PyQtGraph stuff
@@ -68,6 +60,7 @@ class DynamicPlotter(QWidget):
         self.plt.setLabel('bottom', 'time', 's')
         self.curve = self.plt.plot(self.x, self.y, pen=(255,0,0))
         self.thres_curve = self.plt.plot(self.x, self.y, pen=(255,255,0))
+        self.temp_curve = self.plt.plot(self.x, self.y, pen=(0,0,255))
 
         # QTimer
         self.timer = QTimer()
@@ -81,7 +74,13 @@ class DynamicPlotter(QWidget):
         self.verticalLayout.addWidget(current_label)
         self.currentEdit = lineEdit(self)
         self.verticalLayout.addWidget(self.currentEdit)
-        
+       
+        temp_label = QLabel(self)
+        temp_label.setText(u"目前溫度：")
+        self.verticalLayout.addWidget(temp_label)
+        self.tempEdit = lineEdit(self)
+        self.verticalLayout.addWidget(self.tempEdit)
+
         warning_label = QLabel(self)
         warning_label.setText(u"低於警戒值次數：")
         self.verticalLayout.addWidget(warning_label) 
@@ -95,6 +94,7 @@ class DynamicPlotter(QWidget):
         self.verticalLayout.addWidget(self.avgEdit)
 
         self.horizontalLayout.addLayout(self.verticalLayout)
+        self.temp_meter = ky_001(5)
     def set_data(self, val):
         self.current = val
     def get_data(self):
@@ -104,9 +104,13 @@ class DynamicPlotter(QWidget):
     def update_plot(self):
         curr_val = self.get_data()
         self.databuffer.append(curr_val)
+
+        curr_temp = self.temp_meter.get_temp()
+        self.databuffer_tmp.append(curr_temp)
         #print('curr_val: {}'.format(curr_val))
         self.currentEdit.setText(str(curr_val))
-
+#self.avgEdit.setText('{:3.2f}'.format(currAvg))
+        self.tempEdit.setText('{:2.2f}'.format(curr_temp))
         if curr_val < 80 and self.lastWarnVal >= 80:
             self.warnCount += 1
         self.lastWarnVal = curr_val
@@ -127,11 +131,13 @@ class DynamicPlotter(QWidget):
         thres = np.empty(len(self.y))
         thres.fill(80)
         self.thres_curve.setData(self.x, thres)
+        
+        self.temp_curve.setData(self.x, self.databuffer_tmp)
         self.dataCount += 1
         self.lastAvg = currAvg
 
         current_time = strftime("%Y/%m/%d %H:%M:%S")
-        sys.stdout.write("{} {}\n".format(current_time, curr_val))
+        sys.stdout.write("{} {} {}\n".format(current_time, curr_val, curr_temp))
         sys.stdout.flush()
 
 def log_data(threadName):
@@ -163,6 +169,24 @@ if __name__ == '__main__':
     # 30 minutes
     #m = DynamicPlotter(sampleinterval=5, timewindow=1800.)
     #m.show()
+    if len(sys.argv) == 2:
+        #print("Mode: {}".format(sys.argv[1]))
+        global mode
+        mode = int(sys.argv[1])
+    if mode == 1:
+        me = singleton.SingleInstance()
+
+        mb = minimalmodbus
+        mb.BAUDRATE = 4800
+        mb.PARITY = 'N'
+        mb.BYTESIZE = 8
+        mb.STOPBITS = 1
+        mb.TIMEOUT = 0.05
+
+
+        instrument = mb.Instrument('/dev/ttyUSB0', 1) # port name, slave address
+        instrument.mode = minimalmodbus.MODE_RTU
+    
 
     #sys.exit(app.exec_())
     try:
